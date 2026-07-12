@@ -1,4 +1,6 @@
 import prisma from '../prisma/client.js';
+import { checkAndAwardBadges } from '../services/badgeService.js';
+import { createNotification } from '../services/notificationService.js';
 
 // GET /api/participations
 export async function getParticipations(req, res) {
@@ -125,6 +127,17 @@ export async function approveParticipation(req, res) {
         activity: { select: { id: true, title: true } },
       },
     });
+
+    // Notify the employee
+    await createNotification(existing.userId, 'csr_approval', `Your CSR activity "${participation.activity.title}" was ${approvalStatus}`);
+
+    // If approved, check for badge auto-award
+    if (approvalStatus === 'approved') {
+      const newBadges = await checkAndAwardBadges(existing.userId);
+      for (const badgeName of newBadges) {
+        await createNotification(existing.userId, 'badge_unlock', `You unlocked the "${badgeName}" badge!`);
+      }
+    }
 
     return res.json({ participation });
   } catch (error) {

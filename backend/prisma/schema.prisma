@@ -117,6 +117,8 @@ model User {
   complianceIssuesOwned   ComplianceIssue[]        @relation("ComplianceIssueOwner")
   carbonTransactions      CarbonTransaction[]
   trainingRecords         TrainingRecord[]
+  employeeBadges          EmployeeBadge[]
+  notifications           Notification[]
 
   @@map("users")
 }
@@ -251,6 +253,9 @@ model Badge {
   icon        String?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  employeeBadges EmployeeBadge[]
 
   @@map("badges")
 }
@@ -495,6 +500,36 @@ model TrainingRecord {
   user   User   @relation(fields: [userId], references: [id])
 
   @@map("training_records")
+}
+
+// ─── EMPLOYEE BADGE (join table) ────────────────────────────────────────────
+
+model EmployeeBadge {
+  id        String   @id @default(uuid())
+  awardedAt DateTime @default(now()) @map("awarded_at")
+
+  userId  String @map("user_id")
+  user    User   @relation(fields: [userId], references: [id])
+  badgeId String @map("badge_id")
+  badge   Badge  @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+  @@map("employee_badges")
+}
+
+// ─── NOTIFICATION ───────────────────────────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(uuid())
+  type      String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
 }
 
 model AppSettings {

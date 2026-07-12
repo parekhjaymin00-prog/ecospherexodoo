@@ -1,4 +1,5 @@
 import prisma from '../prisma/client.js';
+import { createNotification } from '../services/notificationService.js';
 
 export async function getComplianceIssues(req, res) {
   try {
@@ -22,6 +23,8 @@ export async function createComplianceIssue(req, res) {
     const { description, severity, dueDate, status, auditId, ownerId } = req.body;
     if (!description || !severity || !dueDate || !auditId || !ownerId) return res.status(400).json({ error: 'Description, severity, dueDate, auditId, and ownerId are required' });
     const issue = await prisma.complianceIssue.create({ data: { description, severity, dueDate: new Date(dueDate), status: status || 'open', auditId, ownerId }, include: { audit: { select: { id: true, title: true } }, owner: { select: { id: true, fullName: true } } } });
+    // Notify the assigned owner
+    await createNotification(ownerId, 'compliance_issue', `New compliance issue assigned: "${description.slice(0, 60)}"`);
     return res.status(201).json({ issue });
   } catch (error) { console.error(error); return res.status(500).json({ error: 'Internal server error' }); }
 }

@@ -1,4 +1,6 @@
 import prisma from '../prisma/client.js';
+import { checkAndAwardBadges } from '../services/badgeService.js';
+import { createNotification } from '../services/notificationService.js';
 
 export async function getChallenges(req, res) {
   try {
@@ -93,8 +95,27 @@ export async function approveChallengeParticipation(req, res) {
     if (!existing) return res.status(404).json({ error: 'Participation not found' });
     const xpAwarded = approvalStatus === 'approved' ? existing.challenge.xpReward : 0;
     const updated = await prisma.challengeParticipation.update({ where: { id }, data: { approvalStatus, xpAwarded, progress: approvalStatus === 'approved' ? 100 : existing.progress }, include: { challenge: { select: { id: true, title: true } }, user: { select: { id: true, fullName: true } } } });
-    return res.json({ participation: updated });
+
+    // Notify the employee
+    await createNotification(existing.userId, 'challenge_approval', `Your challenge "${updated.challenge.title}" was ${approvalStatus}`);
+
+    // If approved, check for badge auto-award
+    if (approvalStatus === 'approved') {
+      const newBadges = await checkAndAwardBadges(existing.userId);
+      for (const badgeName of newBadges) {
+        await createNotification(existing.userId, 'badge_unlock', `You unlocked the "${badgeName}" badge!`);
+      }
+    }
+
+    return res.json({ participation: updated, newBadges: approvalStatus === 'approved' ? await getNewBadgeNames(existing.userId) : [] });
   } catch (error) { console.error(error); return res.status(500).json({ error: 'Internal server error' }); }
+}
+
+async function getNewBadgeNames(userId) {
+  // Helper to return recently awarded badges (last minute) for toast display
+  const oneMinAgo = new Date(Date.now() - 60000);
+  const recent = await prisma.employeeBadge.findMany({ where: { userId, awardedAt: { gte: oneMinAgo } }, include: { badge: { select: { name: true } } } });
+  return recent.map(r => r.badge.name);
 }
 
 export async function getChallengeStats(req, res) {

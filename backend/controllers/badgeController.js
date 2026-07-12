@@ -34,3 +34,14 @@ export async function deleteBadge(req, res) {
     return res.json({ message: 'Badge deleted successfully' });
   } catch (error) { console.error(error); return res.status(500).json({ error: 'Internal server error' }); }
 }
+
+export async function getMyBadges(req, res) {
+  try {
+    const earned = await prisma.employeeBadge.findMany({
+      where: { userId: req.user.id },
+      include: { badge: true },
+      orderBy: { awardedAt: 'desc' },
+    });
+    return res.json({ earnedBadgeIds: earned.map(e => e.badgeId), earned });
+  } catch (error) { console.error(error); return res.status(500).json({ error: 'Internal server error' }); }
+}

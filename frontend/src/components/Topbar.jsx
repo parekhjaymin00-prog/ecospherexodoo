@@ -1,5 +1,6 @@
 import { useAuth } from '../hooks/useAuth.js';
 import GlobalSearch from './GlobalSearch.jsx';
+import NotificationBell from './NotificationBell.jsx';
 
 export default function Topbar({ onMenuClick }) {
   const { user, logout } = useAuth();
@@ -13,6 +14,7 @@ export default function Topbar({ onMenuClick }) {
       <GlobalSearch />
 
       <div className="flex items-center gap-4">
+        <NotificationBell />
         <div className="text-right hidden sm:block">
           <p className="text-sm text-white font-medium">{user?.full_name}</p>
           <p className="text-xs text-[#737373] capitalize">{user?.role}</p>
