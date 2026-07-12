@@ -12,6 +12,7 @@ import GovernancePage from './pages/GovernancePage.jsx';
 import GamificationPage from './pages/GamificationPage.jsx';
 import ProductProfilesPage from './pages/ProductProfilesPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
+import SettingsPage from './pages/SettingsPage.jsx';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           <Route path="/gamification" element={<GamificationPage />} />
           <Route path="/products" element={<ProductProfilesPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>

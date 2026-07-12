@@ -172,3 +172,100 @@ export async function globalSearch(req, res) {
     return res.json({ results });
   } catch (error) { console.error(error); return res.status(500).json({ error: 'Internal server error' }); }
 }
+
+export async function getCustomReport(req, res) {
+  try {
+    const { module, departmentId, startDate, endDate, status, groupBy = 'month' } = req.query;
+    const dateFilter = {};
+    if (startDate) dateFilter.gte = new Date(startDate);
+    if (endDate) dateFilter.lte = new Date(endDate);
+
+    let data = [];
+
+    if (module === 'environmental' || !module) {
+      const where = {};
+      if (Object.keys(dateFilter).length) where.transactionDate = dateFilter;
+      const txs = await prisma.carbonTransaction.findMany({ where, include: { emissionFactor: { select: { name: true, category: true } }, user: { select: { fullName: true, department: { select: { name: true } } } } }, orderBy: { transactionDate: 'desc' }, take: 500 });
+      data.push(...txs.map(t => ({ module: 'Environmental', type: 'Carbon Transaction', date: t.transactionDate, description: t.description || t.emissionFactor.name, value: t.emissionAmount, unit: 'kg CO₂e', department: t.user?.department?.name || 'N/A', employee: t.user?.fullName })));
+    }
+
+    if (module === 'social' || !module) {
+      const where = {};
+      if (Object.keys(dateFilter).length) where.startDate = dateFilter;
+      if (departmentId) where.departmentId = departmentId;
+      const acts = await prisma.cSRActivity.findMany({ where, include: { category: { select: { name: true } }, department: { select: { name: true } }, _count: { select: { participations: true } } }, orderBy: { startDate: 'desc' }, take: 500 });
+      data.push(...acts.map(a => ({ module: 'Social', type: 'CSR Activity', date: a.startDate, description: a.title, value: a._count.participations, unit: 'participants', department: a.department?.name || 'N/A', employee: '' })));
+    }
+
+    if (module === 'governance' || !module) {
+      const where = {};
+      if (status) where.status = status;
+      const issues = await prisma.complianceIssue.findMany({ where, include: { audit: { select: { title: true } }, owner: { select: { fullName: true } } }, orderBy: { createdAt: 'desc' }, take: 500 });
+      data.push(...issues.map(i => ({ module: 'Governance', type: 'Compliance Issue', date: i.createdAt, description: i.description, value: i.severity, unit: i.status, department: '', employee: i.owner?.fullName })));
+    }
+
+    if (module === 'gamification' || !module) {
+      const challenges = await prisma.challenge.findMany({ where: status ? { status } : {}, include: { category: { select: { name: true } }, _count: { select: { participations: true } } }, orderBy: { createdAt: 'desc' }, take: 200 });
+      data.push(...challenges.map(c => ({ module: 'Gamification', type: 'Challenge', date: c.createdAt, description: c.title, value: c.xpReward, unit: 'XP', department: c.category?.name || '', employee: '' })));
+    }
+
+    // Group by month if requested
+    let grouped = null;
+    if (groupBy === 'month') {
+      grouped = {};
+      data.forEach(d => {
+        const m = new Date(d.date).toISOString().slice(0, 7);
+        if (!grouped[m]) grouped[m] = { month: m, count: 0, items: [] };
+        grouped[m].count++;
+        grouped[m].items.push(d);
+      });
+      grouped = Object.values(grouped).sort((a, b) => a.month.localeCompare(b.month));
+    }
+
+    return res.json({ data, grouped, total: data.length });
+  } catch (error) { console.error(error); return res.status(500).json({ error: 'Internal server error' }); }
+}
+
+export async function getReportDashboard(req, res) {
+  try {
+    const [esgConfig, carbonAgg, csrCount, policyCount, auditCount, challengeCount, userCount, deptCount, complianceOpen, goalStats] = await Promise.all([
+      prisma.eSGConfig.findFirst(),
+      prisma.carbonTransaction.aggregate({ _sum: { emissionAmount: true }, _count: true }),
+      prisma.cSRActivity.count(),
+      prisma.eSGPolicy.count({ where: { status: 'active' } }),
+      prisma.audit.count(),
+      prisma.challenge.count({ where: { status: 'active' } }),
+      prisma.user.count(),
+      prisma.department.count({ where: { status: 'active' } }),
+      prisma.complianceIssue.count({ where: { status: 'open' } }),
+      prisma.environmentalGoal.count({ where: { status: 'active' } }),
+    ]);
+
+    const scores = await prisma.departmentScore.findMany({ orderBy: { scoredAt: 'desc' }, take: 50 });
+    let envAvg = 0, socAvg = 0, govAvg = 0;
+    if (scores.length > 0) {
+      envAvg = scores.reduce((s, sc) => s + sc.environmentalScore, 0) / scores.length;
+      socAvg = scores.reduce((s, sc) => s + sc.socialScore, 0) / scores.length;
+      govAvg = scores.reduce((s, sc) => s + sc.governanceScore, 0) / scores.length;
+    }
+    const weights = esgConfig || { environmentalWeight: 40, socialWeight: 30, governanceWeight: 30 };
+    const overall = (envAvg * weights.environmentalWeight + socAvg * weights.socialWeight + govAvg * weights.governanceWeight) / 100;
+
+    return res.json({
+      overallESG: Math.round(overall * 10) / 10,
+      environmental: Math.round(envAvg * 10) / 10,
+      social: Math.round(socAvg * 10) / 10,
+      governance: Math.round(govAvg * 10) / 10,
+      carbon: Math.round((carbonAgg._sum.emissionAmount || 0) * 100) / 100,
+      carbonTransactions: carbonAgg._count,
+      csrActivities: csrCount,
+      activePolicies: policyCount,
+      audits: auditCount,
+      activeChallenges: challengeCount,
+      employees: userCount,
+      departments: deptCount,
+      openCompliance: complianceOpen,
+      activeGoals: goalStats,
+    });
+  } catch (error) { console.error(error); return res.status(500).json({ error: 'Internal server error' }); }
+}
