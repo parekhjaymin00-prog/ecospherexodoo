@@ -1,0 +1,479 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+// ─── ENUMS ──────────────────────────────────────────────────────────────────
+
+enum Role {
+  admin
+  manager
+  employee
+}
+
+enum DepartmentStatus {
+  active
+  inactive
+}
+
+enum CategoryType {
+  CSR_ACTIVITY
+  CHALLENGE
+}
+
+enum CategoryStatus {
+  active
+  inactive
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+}
+
+enum ChallengeStatus {
+  draft
+  active
+  under_review
+  completed
+  archived
+}
+
+enum ChallengeDifficulty {
+  easy
+  medium
+  hard
+  expert
+}
+
+enum ComplianceSeverity {
+  low
+  medium
+  high
+  critical
+}
+
+enum ComplianceIssueStatus {
+  open
+  in_progress
+  resolved
+  overdue
+}
+
+enum AuditStatus {
+  scheduled
+  in_progress
+  completed
+  cancelled
+}
+
+enum RewardStatus {
+  active
+  inactive
+  out_of_stock
+}
+
+enum GoalStatus {
+  active
+  completed
+  missed
+  cancelled
+}
+
+enum PolicyStatus {
+  draft
+  active
+  archived
+}
+
+// ─── MASTER DATA: USER ──────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  fullName     String   @map("full_name")
+  companyName  String   @map("company_name")
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(employee)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  departmentId String?     @map("department_id")
+  department   Department? @relation("DepartmentEmployees", fields: [departmentId], references: [id])
+
+  headOfDepartments       Department[]             @relation("DepartmentHead")
+  csrActivitiesCreated    CSRActivity[]            @relation("CSRActivityCreator")
+  employeeParticipations  EmployeeParticipation[]
+  challengeParticipations ChallengeParticipation[]
+  policyAcknowledgements  PolicyAcknowledgement[]
+  auditsLed               Audit[]                  @relation("AuditLead")
+  complianceIssuesOwned   ComplianceIssue[]        @relation("ComplianceIssueOwner")
+  carbonTransactions      CarbonTransaction[]
+
+  @@map("users")
+}
+
+// ─── MASTER DATA: DEPARTMENT ────────────────────────────────────────────────
+
+model Department {
+  id            String           @id @default(uuid())
+  name          String
+  code          String           @unique
+  employeeCount Int              @default(0) @map("employee_count")
+  status        DepartmentStatus @default(active)
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+
+  // Self-referencing for parent department
+  parentId String?      @map("parent_id")
+  parent   Department?  @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children Department[] @relation("DepartmentHierarchy")
+
+  // Head of department
+  headId String? @map("head_id")
+  head   User?   @relation("DepartmentHead", fields: [headId], references: [id])
+
+  // Relations
+  employees        User[]            @relation("DepartmentEmployees")
+  departmentScores DepartmentScore[]
+  csrActivities    CSRActivity[]
+
+  @@map("departments")
+}
+
+// ─── MASTER DATA: CATEGORY ──────────────────────────────────────────────────
+
+model Category {
+  id        String         @id @default(uuid())
+  name      String
+  type      CategoryType
+  status    CategoryStatus @default(active)
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  csrActivities CSRActivity[]
+  challenges    Challenge[]
+
+  @@map("categories")
+}
+
+// ─── MASTER DATA: EMISSION FACTOR ───────────────────────────────────────────
+
+model EmissionFactor {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  unit        String
+  factor      Float
+  source      String?
+  year        Int
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  carbonTransactions CarbonTransaction[]
+
+  @@map("emission_factors")
+}
+
+// ─── MASTER DATA: PRODUCT ESG PROFILE ───────────────────────────────────────
+
+model ProductESGProfile {
+  id                   String   @id @default(uuid())
+  productName          String   @map("product_name")
+  description          String?
+  environmentalScore   Float    @default(0) @map("environmental_score")
+  socialScore          Float    @default(0) @map("social_score")
+  governanceScore      Float    @default(0) @map("governance_score")
+  overallScore         Float    @default(0) @map("overall_score")
+  certifications       String[]
+  sustainableMaterials String[] @map("sustainable_materials")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  @@map("product_esg_profiles")
+}
+
+// ─── MASTER DATA: ENVIRONMENTAL GOAL ────────────────────────────────────────
+
+model EnvironmentalGoal {
+  id           String     @id @default(uuid())
+  title        String
+  description  String?
+  targetValue  Float      @map("target_value")
+  currentValue Float      @default(0) @map("current_value")
+  unit         String
+  startDate    DateTime   @map("start_date")
+  endDate      DateTime   @map("end_date")
+  status       GoalStatus @default(active)
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@map("environmental_goals")
+}
+
+// ─── MASTER DATA: ESG POLICY ────────────────────────────────────────────────
+
+model ESGPolicy {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  content     String
+  version     String       @default("1.0")
+  status      PolicyStatus @default(draft)
+  effectiveAt DateTime?    @map("effective_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  acknowledgements PolicyAcknowledgement[]
+
+  @@map("esg_policies")
+}
+
+// ─── MASTER DATA: BADGE ─────────────────────────────────────────────────────
+
+model Badge {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  unlockRule  String   @map("unlock_rule")
+  icon        String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("badges")
+}
+
+// ─── MASTER DATA: REWARD ────────────────────────────────────────────────────
+
+model Reward {
+  id             String       @id @default(uuid())
+  name           String
+  description    String?
+  pointsRequired Int          @map("points_required")
+  stock          Int          @default(0)
+  status         RewardStatus @default(active)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@map("rewards")
+}
+
+// ─── MASTER DATA: ESG CONFIG ────────────────────────────────────────────────
+
+model ESGConfig {
+  id                    String   @id @default(uuid())
+  organizationName      String   @map("organization_name")
+  environmentalWeight   Float    @default(40) @map("environmental_weight")
+  socialWeight          Float    @default(30) @map("social_weight")
+  governanceWeight      Float    @default(30) @map("governance_weight")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("esg_config")
+}
+
+// ─── TRANSACTIONAL: CARBON TRANSACTION ──────────────────────────────────────
+
+model CarbonTransaction {
+  id               String   @id @default(uuid())
+  description      String?
+  quantity         Float
+  unit             String
+  emissionAmount   Float    @map("emission_amount")
+  scope            Int      // 1, 2, or 3
+  transactionDate  DateTime @map("transaction_date")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  emissionFactorId String         @map("emission_factor_id")
+  emissionFactor   EmissionFactor @relation(fields: [emissionFactorId], references: [id])
+
+  @@map("carbon_transactions")
+}
+
+// ─── TRANSACTIONAL: CSR ACTIVITY ────────────────────────────────────────────
+
+model CSRActivity {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  location    String?
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  budget      Float?
+  maxParticipants Int? @map("max_participants")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  createdById String @map("created_by_id")
+  createdBy   User   @relation("CSRActivityCreator", fields: [createdById], references: [id])
+
+  departmentId String?     @map("department_id")
+  department   Department? @relation(fields: [departmentId], references: [id])
+
+  participations EmployeeParticipation[]
+
+  @@map("csr_activities")
+}
+
+// ─── TRANSACTIONAL: EMPLOYEE PARTICIPATION ──────────────────────────────────
+
+model EmployeeParticipation {
+  id             String         @id @default(uuid())
+  proofUrl       String?        @map("proof_url")
+  approvalStatus ApprovalStatus @default(pending) @map("approval_status")
+  pointsEarned   Int            @default(0) @map("points_earned")
+  completionDate DateTime?      @map("completion_date")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  activityId String      @map("activity_id")
+  activity   CSRActivity @relation(fields: [activityId], references: [id])
+
+  @@unique([userId, activityId])
+  @@map("employee_participations")
+}
+
+// ─── TRANSACTIONAL: CHALLENGE ───────────────────────────────────────────────
+
+model Challenge {
+  id               String              @id @default(uuid())
+  title            String
+  description      String?
+  xpReward         Int                 @default(0) @map("xp_reward")
+  difficulty       ChallengeDifficulty @default(medium)
+  evidenceRequired Boolean             @default(false) @map("evidence_required")
+  deadline         DateTime?
+  status           ChallengeStatus     @default(draft)
+  createdAt        DateTime            @default(now()) @map("created_at")
+  updatedAt        DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  participations ChallengeParticipation[]
+
+  @@map("challenges")
+}
+
+// ─── TRANSACTIONAL: CHALLENGE PARTICIPATION ─────────────────────────────────
+
+model ChallengeParticipation {
+  id             String         @id @default(uuid())
+  progress       Float          @default(0)
+  proofUrl       String?        @map("proof_url")
+  approvalStatus ApprovalStatus @default(pending) @map("approval_status")
+  xpAwarded      Int            @default(0) @map("xp_awarded")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  challengeId String    @map("challenge_id")
+  challenge   Challenge @relation(fields: [challengeId], references: [id])
+
+  @@unique([userId, challengeId])
+  @@map("challenge_participations")
+}
+
+// ─── TRANSACTIONAL: POLICY ACKNOWLEDGEMENT ──────────────────────────────────
+
+model PolicyAcknowledgement {
+  id             String   @id @default(uuid())
+  acknowledgedAt DateTime @default(now()) @map("acknowledged_at")
+
+  // Relations
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  policyId String    @map("policy_id")
+  policy   ESGPolicy @relation(fields: [policyId], references: [id])
+
+  @@unique([userId, policyId])
+  @@map("policy_acknowledgements")
+}
+
+// ─── TRANSACTIONAL: AUDIT ───────────────────────────────────────────────────
+
+model Audit {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  auditDate   DateTime    @map("audit_date")
+  status      AuditStatus @default(scheduled)
+  findings    String?
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  leadId String @map("lead_id")
+  lead   User   @relation("AuditLead", fields: [leadId], references: [id])
+
+  complianceIssues ComplianceIssue[]
+
+  @@map("audits")
+}
+
+// ─── TRANSACTIONAL: COMPLIANCE ISSUE ────────────────────────────────────────
+
+model ComplianceIssue {
+  id          String                @id @default(uuid())
+  description String
+  severity    ComplianceSeverity
+  dueDate     DateTime              @map("due_date")
+  status      ComplianceIssueStatus @default(open)
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  // Relations
+  auditId String @map("audit_id")
+  audit   Audit  @relation(fields: [auditId], references: [id])
+
+  ownerId String @map("owner_id")
+  owner   User   @relation("ComplianceIssueOwner", fields: [ownerId], references: [id])
+
+  @@map("compliance_issues")
+}
+
+// ─── TRANSACTIONAL: DEPARTMENT SCORE ────────────────────────────────────────
+
+model DepartmentScore {
+  id                 String   @id @default(uuid())
+  environmentalScore Float    @default(0) @map("environmental_score")
+  socialScore        Float    @default(0) @map("social_score")
+  governanceScore    Float    @default(0) @map("governance_score")
+  totalScore         Float    @default(0) @map("total_score")
+  scoredAt           DateTime @default(now()) @map("scored_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  departmentId String     @map("department_id")
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  @@map("department_scores")
+}

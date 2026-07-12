@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { migrate } from './migrate.js';
 import authRoutes from './routes/auth.js';
+import dashboardRoutes from './routes/dashboard.js';
 
 // Validate JWT_SECRET at startup
 const jwtSecret = process.env.JWT_SECRET;
@@ -28,6 +29,9 @@ app.use(cors());
 
 // Mount auth routes
 app.use('/api/auth', authRoutes);
+
+// Mount dashboard routes
+app.use('/api/dashboard', dashboardRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
