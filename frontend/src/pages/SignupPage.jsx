@@ -117,7 +117,7 @@ export default function SignupPage() {
         </form>
 
         <div className="my-6">
-          <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="h-px bg-[#2A2A2A]" />
         </div>
 
         <p className="text-center text-[#A3A3A3] text-sm">

@@ -8,12 +8,12 @@ import { useAuth } from './hooks/useAuth.js';
 function Dashboard() {
   const { user, logout } = useAuth();
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0A0A0A, #1F1F1F)' }}>
-      <div className="text-center text-white">
-        <h1 className="text-3xl font-bold mb-4">Dashboard</h1>
+    <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A]">
+      <div className="bg-[#171717] border border-[#2A2A2A] rounded-lg p-8 text-center">
+        <h1 className="text-3xl font-bold text-white mb-4">Dashboard</h1>
         <p className="text-[#A3A3A3] mb-2">Welcome, {user?.full_name}!</p>
         <p className="text-[#A3A3A3] mb-6">Role: {user?.role}</p>
-        <button onClick={logout} className="px-4 py-2 bg-white text-black rounded-lg font-bold hover:bg-gray-200 transition-colors">
+        <button onClick={logout} className="px-4 py-2 bg-white text-black rounded-lg font-bold hover:bg-[#D4D4D4]">
           Logout
         </button>
       </div>

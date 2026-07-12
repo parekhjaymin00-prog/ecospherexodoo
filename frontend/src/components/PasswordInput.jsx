@@ -16,13 +16,13 @@ export default function PasswordInput({ label, name, placeholder, error, registe
           id={name}
           type={showPassword ? 'text' : 'password'}
           placeholder={placeholder}
-          className="bg-transparent border border-white/15 text-white placeholder-[#737373] rounded-lg px-4 py-3 w-full pr-12 focus:border-white focus:ring-2 focus:ring-white/20 focus:outline-none transition-all duration-200"
+          className="bg-[#171717] border border-[#2A2A2A] text-white placeholder-[#737373] rounded-lg px-4 py-3 w-full pr-12 focus:border-white focus:outline-none"
           {...register(name)}
         />
         <button
           type="button"
           aria-label={showPassword ? 'Hide password' : 'Show password'}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-white transition-colors"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#737373] hover:text-white"
           onClick={() => setShowPassword(!showPassword)}
         >
           {showPassword ? (

@@ -106,7 +106,7 @@ export default function LoginPage() {
           </form>
 
           {/* Divider */}
-          <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+          <div className="h-px bg-[#2A2A2A]" />
 
           {/* Signup Link */}
           <p className="text-center text-[#A3A3A3] text-sm">

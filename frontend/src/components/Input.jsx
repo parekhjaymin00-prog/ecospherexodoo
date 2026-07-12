@@ -11,7 +11,7 @@ export default function Input({ label, name, type = 'text', placeholder, error, 
         id={name}
         type={type}
         placeholder={placeholder}
-        className="bg-transparent border border-white/15 text-white placeholder-[#737373] rounded-lg px-4 py-3 w-full focus:border-white focus:ring-2 focus:ring-white/20 focus:outline-none transition-all duration-200"
+        className="bg-[#171717] border border-[#2A2A2A] text-white placeholder-[#737373] rounded-lg px-4 py-3 w-full focus:border-white focus:outline-none"
         {...(register ? register(name) : {})}
         {...rest}
       />
