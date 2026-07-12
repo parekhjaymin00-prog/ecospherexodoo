@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { getAudits, getAuditById, createAudit, updateAudit, deleteAudit, getAuditStats } from '../controllers/auditController.js';
+const router = Router();
+router.get('/', authMiddleware, getAudits);
+router.get('/stats', authMiddleware, getAuditStats);
+router.get('/:id', authMiddleware, getAuditById);
+router.post('/', authMiddleware, createAudit);
+router.put('/:id', authMiddleware, updateAudit);
+router.delete('/:id', authMiddleware, deleteAudit);
+export default router;

@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { getChallenges, getChallengeById, createChallenge, updateChallenge, deleteChallenge, joinChallenge, updateChallengeProgress, approveChallengeParticipation, getChallengeStats } from '../controllers/challengeController.js';
+const router = Router();
+router.get('/', authMiddleware, getChallenges);
+router.get('/stats', authMiddleware, getChallengeStats);
+router.get('/:id', authMiddleware, getChallengeById);
+router.post('/', authMiddleware, createChallenge);
+router.post('/join', authMiddleware, joinChallenge);
+router.put('/:id', authMiddleware, updateChallenge);
+router.put('/participation/:id/progress', authMiddleware, updateChallengeProgress);
+router.put('/participation/:id/approve', authMiddleware, approveChallengeParticipation);
+router.delete('/:id', authMiddleware, deleteChallenge);
+export default router;

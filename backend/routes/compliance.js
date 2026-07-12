@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { getComplianceIssues, createComplianceIssue, updateComplianceIssue, deleteComplianceIssue, getComplianceStats } from '../controllers/complianceController.js';
+const router = Router();
+router.get('/', authMiddleware, getComplianceIssues);
+router.get('/stats', authMiddleware, getComplianceStats);
+router.post('/', authMiddleware, createComplianceIssue);
+router.put('/:id', authMiddleware, updateComplianceIssue);
+router.delete('/:id', authMiddleware, deleteComplianceIssue);
+export default router;

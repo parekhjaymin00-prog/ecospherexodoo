@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { getPolicies, getPolicyById, createPolicy, updatePolicy, deletePolicy, acknowledgePolicy, getPolicyStats } from '../controllers/policyController.js';
+const router = Router();
+router.get('/', authMiddleware, getPolicies);
+router.get('/stats', authMiddleware, getPolicyStats);
+router.get('/:id', authMiddleware, getPolicyById);
+router.post('/', authMiddleware, createPolicy);
+router.post('/acknowledge', authMiddleware, acknowledgePolicy);
+router.put('/:id', authMiddleware, updatePolicy);
+router.delete('/:id', authMiddleware, deletePolicy);
+export default router;
