@@ -10,32 +10,25 @@ import EnvironmentalPage from './pages/EnvironmentalPage.jsx';
 import SocialPage from './pages/SocialPage.jsx';
 import GovernancePage from './pages/GovernancePage.jsx';
 import GamificationPage from './pages/GamificationPage.jsx';
+import ProductProfilesPage from './pages/ProductProfilesPage.jsx';
+import ReportsPage from './pages/ReportsPage.jsx';
 
 function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-
-        {/* Protected routes with dashboard layout */}
-        <Route
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
+        <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/departments" element={<DepartmentsPage />} />
           <Route path="/environmental" element={<EnvironmentalPage />} />
           <Route path="/social" element={<SocialPage />} />
           <Route path="/governance" element={<GovernancePage />} />
           <Route path="/gamification" element={<GamificationPage />} />
+          <Route path="/products" element={<ProductProfilesPage />} />
+          <Route path="/reports" element={<ReportsPage />} />
         </Route>
-
-        {/* Default redirect */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </AuthProvider>

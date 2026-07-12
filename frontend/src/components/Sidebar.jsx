@@ -7,6 +7,8 @@ const navigation = [
   { name: 'Social', path: '/social', icon: 'social' },
   { name: 'Governance', path: '/governance', icon: 'governance' },
   { name: 'Gamification', path: '/gamification', icon: 'gamification' },
+  { name: 'Products', path: '/products', icon: 'products' },
+  { name: 'Reports', path: '/reports', icon: 'reports' },
 ];
 
 function NavIcon({ name, className }) {
@@ -41,6 +43,16 @@ function NavIcon({ name, className }) {
         <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 4.236c-.996.178-1.768-.767-1.768-1.768V2.25h16.5v.218c0 1.001-.772 1.946-1.768 1.768a4.5 4.5 0 0 1-6.964 3.406 4.5 4.5 0 0 1-6-3.406Z" />
       </svg>
     ),
+    products: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+      </svg>
+    ),
+    reports: (
+      <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+      </svg>
+    ),
   };
 
   return icons[name] || null;
@@ -66,11 +78,16 @@ export default function Sidebar({ open, onClose }) {
             to={item.path}
             onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors no-underline ${
                 isActive
-                  ? 'bg-white text-black'
-                  : 'text-[#A3A3A3] hover:bg-[#1F1F1F] hover:text-white'
+                  ? 'bg-white'
+                  : 'hover:bg-[#1F1F1F]'
               }`
+            }
+            style={({ isActive }) =>
+              isActive
+                ? { color: '#000000' }
+                : { color: '#A3A3A3' }
             }
           >
             <NavIcon name={item.icon} className="w-5 h-5" />
