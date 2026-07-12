@@ -42,8 +42,8 @@ router.post('/signup', async (req, res) => {
 
     // Insert user with role forced to 'employee'
     const result = await pool.query(
-      `INSERT INTO users (full_name, company_name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4, 'employee')
+      `INSERT INTO users (id, full_name, company_name, email, password_hash, role, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, 'employee', NOW(), NOW())
        RETURNING id, full_name, company_name, email, role, created_at`,
       [full_name, company_name, email, password_hash]
     );
