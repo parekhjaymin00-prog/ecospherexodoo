@@ -93,14 +93,16 @@ enum PolicyStatus {
 // ─── MASTER DATA: USER ──────────────────────────────────────────────────────
 
 model User {
-  id           String   @id @default(uuid())
-  fullName     String   @map("full_name")
-  companyName  String   @map("company_name")
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  role         Role     @default(employee)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  fullName       String   @map("full_name")
+  companyName    String   @map("company_name")
+  email          String   @unique
+  passwordHash   String   @map("password_hash")
+  role           Role     @default(employee)
+  gender         String?
+  employmentType String?  @map("employment_type")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
   departmentId String?     @map("department_id")
@@ -114,6 +116,7 @@ model User {
   auditsLed               Audit[]                  @relation("AuditLead")
   complianceIssuesOwned   ComplianceIssue[]        @relation("ComplianceIssueOwner")
   carbonTransactions      CarbonTransaction[]
+  trainingRecords         TrainingRecord[]
 
   @@map("users")
 }
@@ -479,6 +482,20 @@ model DepartmentScore {
 }
 
 // ─── SETTINGS: APP SETTINGS ─────────────────────────────────────────────────
+
+model TrainingRecord {
+  id             String   @id @default(uuid())
+  trainingName   String   @map("training_name")
+  status         String   @default("not_started")
+  completionDate DateTime? @map("completion_date")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("training_records")
+}
 
 model AppSettings {
   id                        String  @id @default(uuid())

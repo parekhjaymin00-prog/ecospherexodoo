@@ -21,6 +21,7 @@ import leaderboardRoutes from './routes/leaderboard.js';
 import productProfileRoutes from './routes/productProfiles.js';
 import reportRoutes from './routes/reports.js';
 import settingsRoutes from './routes/settings.js';
+import trainingRoutes from './routes/training.js';
 
 const jwtSecret = process.env.JWT_SECRET;
 if (!jwtSecret || jwtSecret.trim() === '') { console.error('ERROR: JWT_SECRET environment variable is required.'); process.exit(1); }
@@ -51,6 +52,7 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/product-profiles', productProfileRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/training', trainingRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => { console.log(`Server running on port ${PORT}`); });

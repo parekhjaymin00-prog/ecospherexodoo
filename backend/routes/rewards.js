@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import authMiddleware from '../middleware/authMiddleware.js';
-import { getRewards, createReward, updateReward, deleteReward } from '../controllers/rewardController.js';
+import { getRewards, createReward, updateReward, deleteReward, redeemReward, getMyPoints } from '../controllers/rewardController.js';
 const router = Router();
 router.get('/', authMiddleware, getRewards);
+router.get('/my-points', authMiddleware, getMyPoints);
 router.post('/', authMiddleware, createReward);
+router.post('/:id/redeem', authMiddleware, redeemReward);
 router.put('/:id', authMiddleware, updateReward);
 router.delete('/:id', authMiddleware, deleteReward);
 export default router;

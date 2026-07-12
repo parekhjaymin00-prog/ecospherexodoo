@@ -175,21 +175,23 @@ export async function globalSearch(req, res) {
 
 export async function getCustomReport(req, res) {
   try {
-    const { module, departmentId, startDate, endDate, status, groupBy = 'month' } = req.query;
+    const { module, departmentId, employeeId, challengeId, esgCategory, startDate, endDate, status, groupBy = 'month' } = req.query;
     const dateFilter = {};
     if (startDate) dateFilter.gte = new Date(startDate);
     if (endDate) dateFilter.lte = new Date(endDate);
 
     let data = [];
 
-    if (module === 'environmental' || !module) {
+    if (module === 'environmental' || esgCategory === 'environmental' || (!module && !esgCategory)) {
       const where = {};
       if (Object.keys(dateFilter).length) where.transactionDate = dateFilter;
+      if (employeeId) where.userId = employeeId;
+      if (departmentId) where.user = { departmentId };
       const txs = await prisma.carbonTransaction.findMany({ where, include: { emissionFactor: { select: { name: true, category: true } }, user: { select: { fullName: true, department: { select: { name: true } } } } }, orderBy: { transactionDate: 'desc' }, take: 500 });
       data.push(...txs.map(t => ({ module: 'Environmental', type: 'Carbon Transaction', date: t.transactionDate, description: t.description || t.emissionFactor.name, value: t.emissionAmount, unit: 'kg CO₂e', department: t.user?.department?.name || 'N/A', employee: t.user?.fullName })));
     }
 
-    if (module === 'social' || !module) {
+    if (module === 'social' || esgCategory === 'social' || (!module && !esgCategory)) {
       const where = {};
       if (Object.keys(dateFilter).length) where.startDate = dateFilter;
       if (departmentId) where.departmentId = departmentId;
@@ -197,15 +199,19 @@ export async function getCustomReport(req, res) {
       data.push(...acts.map(a => ({ module: 'Social', type: 'CSR Activity', date: a.startDate, description: a.title, value: a._count.participations, unit: 'participants', department: a.department?.name || 'N/A', employee: '' })));
     }
 
-    if (module === 'governance' || !module) {
+    if (module === 'governance' || esgCategory === 'governance' || (!module && !esgCategory)) {
       const where = {};
       if (status) where.status = status;
+      if (employeeId) where.ownerId = employeeId;
       const issues = await prisma.complianceIssue.findMany({ where, include: { audit: { select: { title: true } }, owner: { select: { fullName: true } } }, orderBy: { createdAt: 'desc' }, take: 500 });
       data.push(...issues.map(i => ({ module: 'Governance', type: 'Compliance Issue', date: i.createdAt, description: i.description, value: i.severity, unit: i.status, department: '', employee: i.owner?.fullName })));
     }
 
-    if (module === 'gamification' || !module) {
-      const challenges = await prisma.challenge.findMany({ where: status ? { status } : {}, include: { category: { select: { name: true } }, _count: { select: { participations: true } } }, orderBy: { createdAt: 'desc' }, take: 200 });
+    if (module === 'gamification' || (!module && !esgCategory)) {
+      const where = {};
+      if (status) where.status = status;
+      if (challengeId) where.id = challengeId;
+      const challenges = await prisma.challenge.findMany({ where, include: { category: { select: { name: true } }, _count: { select: { participations: true } } }, orderBy: { createdAt: 'desc' }, take: 200 });
       data.push(...challenges.map(c => ({ module: 'Gamification', type: 'Challenge', date: c.createdAt, description: c.title, value: c.xpReward, unit: 'XP', department: c.category?.name || '', employee: '' })));
     }
 

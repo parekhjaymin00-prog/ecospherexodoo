@@ -10,7 +10,6 @@ import EnvironmentalPage from './pages/EnvironmentalPage.jsx';
 import SocialPage from './pages/SocialPage.jsx';
 import GovernancePage from './pages/GovernancePage.jsx';
 import GamificationPage from './pages/GamificationPage.jsx';
-import ProductProfilesPage from './pages/ProductProfilesPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 
@@ -27,7 +26,6 @@ function App() {
           <Route path="/social" element={<SocialPage />} />
           <Route path="/governance" element={<GovernancePage />} />
           <Route path="/gamification" element={<GamificationPage />} />
-          <Route path="/products" element={<ProductProfilesPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
